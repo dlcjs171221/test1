@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bbs">
+
+
+
+	<!-- 특정 원글의 기본키를 조건으로 하여 해당 댓글들을 조회하는 기능 -->
+	<select id="commList" parameterType="String" resultType ="mybatis.vo.CommVO">
+  		SELECT * FROM comment_t WHERE B_IDX= #{b_idx}
+  	</select>
+	
+	
+		
+	<!-- 
+		사용자가 원글의 목록을 만들기 위해 호출하는 기능 
+		(결과는 BbsVo안에 여러개의 CommVO를 가지는 복잡적인 결과를 만들어야한다.) 
+	-->
+	<select id="bbsList" parameterType="java.util.Map" resultMap="map1">
+	<!-- 페이징기법으로 인해 parameterType을쓴다(2개가넘어온다. begin,end)-->
+			
+		SELECT * 
+		FROM(
+			SELECT rownum r_num, a.* 
+			FROM 
+				( 
+				  SELECT * 
+				  FROM bbs_t 
+				  WHERE status = 0 
+				  ORDER BY b_idx DESC 
+				 ) a<!-- 살아있는 모든것을 가져온다. 결과로 a라는 테이블이 만들어진다. 0 = 삭제X, 1 = 삭제O-->
+		)
+		WHERE r_num BETWEEN #{begin} AND #{end}
+		<!-- status 삭제여부 0 또는 1 -->
+	</select>
+	
+	
+	
+	<resultMap type="mybatis.vo.BbsVO" id="map1">
+		<id property="b_idx" column="b_idx" /><!-- property는 mybatis.vo.BbsVO의 들어갈 속성,column은 들어갈 값-->
+		<collection property="c_list" ofType="mybatis.vo.CommVO" select="commList" column="b_idx"/>
+		<!-- property="c_list"로 포장해서 전달한다 -->
+	</resultMap>
+		
+	
+	
+	<!-- 페이징 기법에 사용될 전체페이지 수를 구하기 위해서는 전체 게시물의 수를 알아야한다. -->
+	<select id="totalCount"  resultType="int">
+		SELECT count(*) FROM bbs_t WHERE status = 0
+	</select>
+
+	<insert id="add" parameterType="java.util.Map">
+		INSERT INTO bbs_t(B_IDX, SUBJECT, WRITER, CONTENT, FILE_NAME, ORI_NAME, PWD, WRITE_DATE, IP, HIT, STATUS)
+		values(bbs_t_seq.NEXTVAL, #{title}, #{writer}, #{content}, #{file},#{ori_name},#{pwd},sysdate,#{ip},0,0)
+	</insert>
+		
+	<!-- 보기 -->
+	<select id="view" resultMap="map1" parameterType="String">
+		SELECT * FROM bbs_t WHERE b_idx = #{b_idx}
+	</select>
+	
+	<!-- 수정 -->
+	<update id="edit" parameterType="java.util.Map">
+		UPDATE bbs_t SET subject=#{title}, writer=#{writer}, write_date=sysdate, content=#{content} WHERE b_idx = #{b_idx}
+  	</update>
+  	
+  	<!-- 원글 삭제 -->
+  	<update id="del"  parameterType="java.util.Map">
+  			UPDATE bbs_t SET status = 1 WHERE b_idx = #{b_idx} AND pwd = #{pw}
+  	</update>
+  	
+  	<!-- 댓글 저장 -->
+  	<insert id="commAdd" parameterType="java.util.Map">
+  		INSERT INTO comment_t (c_idx,writer,content,pwd,write_date,ip,b_idx)
+  		VALUES(comment_t_seq.NEXTVAL,#{writer},#{content},#{pwd},sysdate,#{ip},#{b_idx})
+  	</insert>
+  	
+  	 	
+  	<!--  조회수 올리기 -->
+  	<update id="hit" parameterType="String">
+  		UPDATE bbs_t SET HIT = HIT + 1 WHERE B_IDX = #{b_idx}
+  	</update>
+  	
+  	
+  	
+</mapper>

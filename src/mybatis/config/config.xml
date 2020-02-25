@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+  <environments default="">
+    <environment id="">
+      <transactionManager type="JDBC"/>
+      <dataSource type="JNDI"> <!-- JNDI(Java Naming and Directory Interface): 디렉터리 서비스에서 제공하는 데이터 및 객체를 발견(discover)하고 참고(lookup)하기 위한 자바 API다. -->
+        <property name="data_source" value="java:comp/env/jdbc/oracle"/><!-- 해당객체의 멤버변수 (property) 즉,JNDI라는 객체의 멤버변수 -->
+      </dataSource>
+    </environment>
+  </environments>
+  <mappers>
+    <mapper resource="mybatis/mapper/bbs.xml"/>
+  </mappers>
+</configuration>
+
+
+
